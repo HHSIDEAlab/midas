@@ -255,10 +255,10 @@ module.exports = {
    */
   resetPassword: function (req, res) {
     // POST is the only supported method
-    if (req.route.method != 'post') { return res.send(400, {message:'Unsupported operation.'}) }
+    if (req.route.method != 'post') { return res.send(400, {message:'Unsupported operation.'}); }
     var userId = req.user[0].id;
     // Allow administrators to set other users' passwords
-    if ((req.user.isAdmin === true) && (req.param('id'))) {
+    if ((req.user[0].isAdmin === true) && (req.param('id'))) {
       userId = req.param('id');
     }
 
