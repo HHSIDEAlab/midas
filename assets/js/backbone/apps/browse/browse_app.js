@@ -12,15 +12,21 @@ define([
   'task_model',
   'task_show_controller',
   'task_edit_form_view',
+  'home_view',
+  'home_controller',
+  'about_view',
   'admin_main_controller'
 ], function ($, _, Backbone, utils, NavView, FooterView, BrowseListController,
   ProjectModel, ProjectShowController, ProfileShowController, TaskModel,
-  TaskShowController, TaskEditFormView, AdminMainController) {
+  TaskShowController, TaskEditFormView,
+  HomeView, HomeController, AboutView,
+  AdminMainController) {
 
   var BrowseRouter = Backbone.Router.extend({
 
     routes: {
-      ''                          : 'redirectHome',
+      ''                          : 'showHome',
+      'about(/)'                  : 'showAbout',  
       'projects(/)'               : 'listProjects',
       'projects/:id(/)'           : 'showProject',
       'projects/:id/:action(/)'   : 'showProject',
@@ -43,9 +49,12 @@ define([
       this.footerView = new FooterView({
         el: '#footer'
       }).render();
+      
     },
 
     cleanupChildren: function () {
+      if (this.homeView) { this.homeView.cleanup(); }
+      if (this.aboutView) { this.aboutView.cleanup(); }
       if (this.browseListController) { this.browseListController.cleanup(); }
       if (this.projectShowController) { this.projectShowController.cleanup(); }
       if (this.profileShowController) { this.profileShowController.cleanup(); }
@@ -53,10 +62,25 @@ define([
       this.data = { saved: false };
     },
 
-    redirectHome: function () {
-      Backbone.history.navigate('/projects', { trigger: true });
+    showHome: function () {
+      this.cleanupChildren();
+      this.homeView = new HomeView({
+        el: '#home'
+      }).render();
+      this.browseListController = new BrowseListController({
+        el: '#container',
+        target: 'projects',
+        data: this.data
+      });
     },
-
+  
+    showAbout: function () {
+      this.cleanupChildren();
+      this.aboutView = new AboutView({
+        el: '#container'
+      }).render();
+    },
+  
     listProjects: function () {
       this.cleanupChildren();
       this.browseListController = new BrowseListController({

@@ -53,7 +53,7 @@
       <form class="form-horizontal" role="form" id="profile-form">
         <h1>
           <div class="form-group">
-            <input type="text" class="form-control input-lg" id="name" name="name" placeholder="Your Full Name" value="<% if (data.name) { %><%- data.name %><% } %>"/>
+            <input type="text" class="form-control input-lg" id="name" name="name" placeholder="First Name and Last Name" value="<% if (data.name) { %><%- data.name %><% } %>"/>
           </div>
         </h1>
 
@@ -67,7 +67,7 @@
         </div>
 
         <div class="form-group">
-          <label for="company" class="col-md-3 control-label">Agency</label>
+          <label for="company" class="col-md-3 control-label">OpDiv</label>
           <div class="col-md-9">
             <input type="hidden" id="company" name="company" style="width: 100%"/>
           </div>
@@ -81,13 +81,13 @@
         </div>
 
         <div class="form-group">
-          <label for="bio" class="col-md-3 control-label">A brief public biography</label>
+          <label for="bio" class="col-md-3 control-label">More About You</label>
           <div class="col-md-9">
             <div class="markdown-edit"></div>
           </div>
         </div>
 
-        <h2> Account Information </h2>
+        <!-- <h2> Account Information </h2> -->
 
         <div class="form-group">
           <label for="profile-emails" class="col-md-3 control-label">Primary Email</label>

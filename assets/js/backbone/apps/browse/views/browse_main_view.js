@@ -76,7 +76,7 @@ define([
 
       // Initialize Select2
       $("#search").select2({
-        placeholder: 'I\'m looking for...',
+        placeholder: 'Search project names, opportunity titles, and tags..',
         multiple: true,
         formatResult: formatResult,
         formatSelection: formatResult,

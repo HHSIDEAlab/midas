@@ -33,6 +33,8 @@ import:
 	-cp $(DIR)/assets/styles/*.css assets/styles/
 	-cp -R $(DIR)/assets/images/* assets/images/
 	-cp $(DIR)/assets/js/backbone/apps/footer/templates/footer_template.html assets/js/backbone/apps/footer/templates/footer_template.html
+	-cp $(DIR)/assets/js/backbone/apps/about/templates/about_template.html assets/js/backbone/apps/about/templates/about_template.html
+	-cp $(DIR)/assets/js/backbone/apps/home/templates/home_template.html assets/js/backbone/apps/home/templates/home_template.html
 	-cp $(DIR)/test/init/init/config.js test/init/init/config.js
 	-cp $(DIR)/test/demo/data/config.js test/demo/data/config.js
 	-cp -R $(DIR)/test/demo/data/assets/* test/demo/data/assets

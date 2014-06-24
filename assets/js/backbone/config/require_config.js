@@ -65,7 +65,20 @@ require.config({
     // ----------
     'footer_view'               : '../apps/footer/views/footer_view',
     'footer_template'           : '../apps/footer/templates/footer_template.html',
-
+	
+    // ----------
+    //= Home
+    // ----------
+    'home_view'               : '../apps/home/views/home_view',
+    'home_template'           : '../apps/home/templates/home_template.html',
+    'home_controller'          : '../apps/home/controllers/home_controller',
+	
+    // ----------
+    //= About
+    // ----------
+    'about_view'               : '../apps/about/views/about_view',
+    'about_template'           : '../apps/about/templates/about_template.html',
+	
     // ----------
     //= Login
     // ----------

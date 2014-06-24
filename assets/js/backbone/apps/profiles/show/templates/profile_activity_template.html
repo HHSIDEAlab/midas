@@ -68,7 +68,12 @@
       <% } else { %>
         <tbody>
           <tr>
-            <td>No <%= target %>s</td>
+			 <%  if (target == "task") { %>
+			  <td>No Opportunities</td>
+			  <% } else { %>
+			  <td>No <%= target %>s</td> 
+			<% } %>
+            
           </tr>
         </tbody>
       <% } %>

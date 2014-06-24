@@ -290,7 +290,7 @@ define([
 
       var modelJson = this.model.toJSON();
       $("#company").select2({
-        placeholder: 'Select an Agency',
+        placeholder: 'Select an OpDiv',
         formatResult: formatResult,
         formatSelection: formatResult,
         minimumInputLength: 2,
@@ -315,7 +315,7 @@ define([
         self.model.trigger("profile:input:changed", e);
       });
       $("#location").select2({
-        placeholder: 'Select a Location',
+        placeholder: 'Select Location (State, Country)',
         formatResult: formatResult,
         formatSelection: formatResult,
         minimumInputLength: 1,
@@ -374,7 +374,7 @@ define([
         data: this.model.toJSON().bio,
         el: ".markdown-edit",
         id: 'bio',
-        placeholder: 'A short biography.',
+        placeholder: 'Provide details on the office you work in, things you are interested in, background information, etc.',
         rows: 6
       }).render();
     },
