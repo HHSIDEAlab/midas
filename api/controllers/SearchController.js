@@ -29,7 +29,7 @@ function search (target, req, res) {
 
   // For each tag, find items associated with it
   var processTag = function (tagId, cb) {
-    var where = {}
+    var where = {};
     var t = target.substr(0, target.length - 1);
     where[t + 'Id'] = { not: null };
     Tag.find()
@@ -69,12 +69,16 @@ function search (target, req, res) {
       // Perform item specific processing
       // Get task metadata
       if (target == 'tasks') {
-        taskUtil.findTasks({ id: itemIdsAuthorized }, function (err, items) {
-          if (err) { return res.send(400, { message: 'Error performing query.', error: err }); }
-          return res.send(items);
-        });
-        return;
+    	if (itemIdsAuthorized.length > 0) {
+          taskUtil.findTasks({ id: itemIdsAuthorized }, function (err, items) {
+            if (err) { return res.send(400, { message: 'Error performing query.', error: err }); }
+            return res.send(items);
+          });
+        }
+        // No authorized IDs matched the search criteria. Send an empty array.
+    	return res.send([]);
       }
+    	
       // Get project metadata
       async.each(items, projUtil.addCounts, function (err) {
         if (err) { return res.send(400, { message: 'Error performing query.'}); }

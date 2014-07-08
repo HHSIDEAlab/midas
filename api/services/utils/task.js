@@ -104,7 +104,9 @@ var findTasks = function (where, cb) {
   .where(w)
   .sort({'updatedAt': -1})
   .exec(function (err, tasks) {
-    if (err) { return res.send(400, { message: 'Error looking up tasks.' }); }
+    if (err) {
+    	return cb( { message: 'Error looking up tasks.' }, null);
+    }
     // function for looking up user info
     var lookupUser = function (task, done) {
       userUtil.getUser(task.userId, null, function (err, user) {
