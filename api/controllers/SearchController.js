@@ -64,7 +64,7 @@ function search (target, req, res) {
   async.each(q.tags, processTag, function (err) {
     if (err) { return res.send(400, { message: 'Error performing query.'}); }
     // Get the details of each item
-    sails.log.debug('Matching items: ', itemIds);
+    sails.log.debug('Matching task IDs: ', itemIds);
     async.each(itemIds, check, function (err) {
       if (err) { return res.send(400, { message: 'Error performing query.'}); }
       // Perform item specific processing
@@ -74,12 +74,15 @@ function search (target, req, res) {
     	if (itemIdsAuthorized.length > 0) {
           taskUtil.findTasks({ id: itemIdsAuthorized }, function (err, items) {
             if (err) { return res.send(400, { message: 'Error performing query.', error: err }); }
-            sails.log.debug('Found task metadata: ', items);
-            return res.send(items);
+            sails.log.debug('Sending task metadata: ', items);
+            res.send(items);
           });
+        } else {
+          // No authorized IDs matched the search criteria. Send an empty array.
+          sails.log.debug('Sending empty response due to no matching tasks.');
+          res.send([]);
         }
-        // No authorized IDs matched the search criteria. Send an empty array.
-    	return res.send([]);
+        return;
       }
     	
       // Get project metadata
