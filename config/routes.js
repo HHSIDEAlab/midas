@@ -38,6 +38,10 @@ module.exports.routes = {
   },
 
   // These routes are for backbone push state to work
+  '/about': {
+    controller: 'main',
+    action: 'index'
+  },
   '/projects': {
     controller: 'main',
     action: 'index'

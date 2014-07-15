@@ -78,7 +78,7 @@ define([
 
     initializeToggle: function () {
       if(this.edit){
-        this.$('#editProject').find('.box-icon-text').html('View Project');
+        this.$('#editProject').find('.box-icon-text').css( "visibility", "hidden" );
       }
       else{
         this.$('#editProject').find('.box-icon-text').html('Edit Project');
