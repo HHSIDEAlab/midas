@@ -199,14 +199,21 @@ function NotificationBuilder () {
           params.data.audience[audience].strategy[strategyName].preflight[preflightStrategy] = params.data.audience[audience].strategy[strategyName].preflight[preflightStrategy] || {};
           // local parameter preflight settings and fields transferred over to a new object to be modified
           var localVars = _.extend({}, params.data.audience[audience].strategy[strategyName].preflight[preflightStrategy]);
+
           localVars.fields = localVars.fields || {};
+
           // add the recipient's user info to the metadata
           localVars.fields.metadata = {
             recipient: recipient
           };
+
+          //add the fields from the trigger event (if any) so they are available for preflight
+          localVars.fields.metadata.modelTrigger = params.data.audience[audience].fields || null;
+
           // recipientId and callerId added to fields for convenience, as they will almost always come in handy
           localVars.fields.recipientId = recipient.id;
           localVars.fields.callerId = notification.callerId;
+
           // combine global default settings with local settings to produce master settings list
           synthesizeSettings(
             localVars,
@@ -272,6 +279,9 @@ function NotificationBuilder () {
             // combine global default fields with local fields to produce master fields list
             var fields = localVars.fields;
             // goes ahead and persists the delivery model here, as the fields/settings produced in prior callback will still be in scope
+            sails.log.debug('prepareDelivery deliveryStrategy:', deliveryStrategy);
+            sails.log.debug('audience:', audience);
+            sails.log.debug('notification:', notification)
             generateDelivery(audience, notification, deliveryStrategy, content, function(err, delivery){
               if (err) { sails.log.debug(err); done(null, null); return false;}
               // makes use of master fields/settings in scope and dispatches the delivery
@@ -331,6 +341,9 @@ function NotificationBuilder () {
       var settings, localSettings, globalSettings;
       // ensure both parameter objects have proper form
       hostObject.settings = hostObject.settings || {};
+      if (_.isUndefined(globalObject)) {
+        globalObject = {};
+      }
       globalObject.settings = globalObject.settings || {};
       settings = {};
       localSettings = _.extend({}, hostObject.settings);

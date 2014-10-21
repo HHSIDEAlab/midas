@@ -1,6 +1,32 @@
 ## Contributing
 
+### Public domain
+
+This project is in the public domain within the United States, and
+copyright and related rights in the work worldwide are waived through
+the [CC0 1.0 Universal public domain dedication](https://creativecommons.org/publicdomain/zero/1.0/).
+
+All contributions to this project will be released under the CC0
+dedication. By submitting a pull request, you are agreeing to comply
+with this waiver of copyright interest.
+
+## Development Process
+
 This project follows the [git flow](http://nvie.com/posts/a-successful-git-branching-model/) branching model of product development.
+
+### Testing
+
+To run all the tests:
+```make test```
+
+For testing in Midas, we are using:
+* [mocha](http://visionmedia.github.io/mocha/) test framework
+* [chai](http://chaijs.com/) assertion library
+* [request](https://github.com/mikeal/request) to make http calls for testing API endpoints
+
+The following command will execute a single test file in the application context:
+```NODE_ENV=test ./node_modules/.bin/mocha test/test.upstart.js test/api/sails/tag.test.js```
+
 
 ### Backbone
 

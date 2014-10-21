@@ -22,17 +22,22 @@ module.exports = {
           request(conf.url + '/user', function (err, response, body) {
             if (err) { return cb(err); }
             if (response.statusCode !== 200) {
-              cb('Error: Login unsuccessful. ' + body)
+              return cb('Error: Login unsuccessful. ' + body)
             }
-            cb(null);
+            var b = JSON.parse(body);
+            return cb(null, b);
           });
         }
         if (response.statusCode == 403) {
           // this could be because the user isn't registered; try to register
+          // console.log('register user: '+username);
           request.post({ url: conf.url + '/auth/register',
                          form: { username: username, password: password, json: true },
                        }, function (err, response, body) {
             if (err) { return cb(err); }
+            if (response.statusCode !== 200) {
+              return cb('Error: Register unsuccessful. ' + body)
+            }
             getUser(cb);
           });
         } else {
@@ -52,10 +57,10 @@ module.exports = {
     });
   },
 
-  user_put: function (request, user, cb) {
+  user_put: function (request, id, user_attrs, cb) {
     var r = request.put({
-      url: conf.url + '/user/' + user.id,
-      body: JSON.stringify(user)
+      url: conf.url + '/user/' + id,
+      body: JSON.stringify(user_attrs)
     }, function(err, response, body) {
       if (err) { return cb(err, null); }
       var b = JSON.parse(body);
@@ -88,6 +93,7 @@ module.exports = {
       if (b.status == 500) return cb(new Error("500 Error from POST", b));
       return cb(null, b);
     });
+
     var form = r.form();
     if (square === true) {
       form.append('type', 'image_square');

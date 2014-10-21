@@ -27,6 +27,12 @@ require.config({
     'async'                     : '../../vendor/async/lib/async',
     'marked'                    : '../../vendor/marked/lib/marked',
     'autolinker'                : '../../vendor/autolinker/dist/Autolinker',
+    'i18n'                      : '../../vendor/i18next/i18next.amd.withJQuery',
+
+    // ---------
+    // Internationalization configuration for the client side.
+    // ---------
+    'i18n_config'               : '../config/i18n.json',
 
     // ---------
     //= Mixins
@@ -53,6 +59,11 @@ require.config({
     'base_app_module'           : '../base/base_app_module',
     'base_component'            : '../base/base_component',
     'base_view'                 : '../base/base_view',
+
+    // ----------
+    //= UI Config
+    // ----------
+    'ui_config'              : '../config/ui.json',
 
     // ----------
     //= Navigation
@@ -208,7 +219,8 @@ require.config({
     'alert_template'            : '../components/alert_template.html',
     'markdown_editor'           : '../components/markdown_editor',
     'markdown_editor_template'  : '../components/markdown_editor_template.html',
-    'autocomplete'              : '../mixins/autocomplete'
+    'autocomplete'              : '../mixins/autocomplete',
+    'tag_factory'               : '../components/tag_factory'
   },
 
   shim: {

@@ -1,11 +1,12 @@
 define([
   'jquery',
-  'async',
-  'jquery_iframe',
-  'jquery_fileupload',
   'underscore',
   'backbone',
   'utilities',
+  'json!ui_config',
+  'async',
+  'jquery_iframe',
+  'jquery_fileupload',
   'markdown_editor',
   'marked',
   'tag_show_view',
@@ -15,7 +16,7 @@ define([
   'modal_component',
   'profile_activity_view',
   'profile_email_view'
-], function ($, async, jqIframe, jqFU, _, Backbone, utils, MarkdownEditor, marked,
+], function ($,  _, Backbone, utils, UIConfig, async, jqIframe, jqFU, MarkdownEditor, marked,
   TagShowView, ProfileTemplate, EmailTemplate, Login, ModalComponent, PAView, EmailFormView) {
 
   var ProfileShowView = Backbone.View.extend({
@@ -51,8 +52,10 @@ define([
         data: this.model.toJSON(),
         user: window.cache.currentUser || {},
         edit: this.edit,
-        saved: this.saved
+        saved: this.saved,
+        ui: UIConfig
       }
+
       if (data.data.bio) {
         data.data.bioHtml = marked(data.data.bio);
       }
@@ -148,6 +151,7 @@ define([
     initializePAView: function () {
       if (this.projectView) { this.projectView.cleanup(); }
       if (this.taskView) { this.taskView.cleanup(); }
+      if (this.volView) { this.volView.cleanup(); }
       $.ajax('/api/user/activities/' + this.model.attributes.id).done(function (data) {
         this.projectView = new PAView({
           model: this.model,
@@ -158,11 +162,18 @@ define([
         this.projectView.render();
         this.taskView = new PAView({
           model: this.model,
-          el: '.task-activity-wrapper',
+          el: '.task-createdactivity-wrapper',
           target: 'task',
           data: data.tasks
         });
         this.taskView.render();
+        this.volView = new PAView({
+          model: this.model,
+          el: '.task-activity-wrapper',
+          target: 'task',
+          data: data.volTasks
+        });
+        this.volView.render();
 
       });
     },
@@ -497,6 +508,7 @@ define([
       if (this.tagView) { this.tagView.cleanup(); }
       if (this.projectView) { this.projectView.cleanup(); }
       if (this.taskView) { this.taskView.cleanup(); }
+      if (this.volView) { this.volView.cleanup(); }
       removeView(this);
     },
 
