@@ -6,12 +6,36 @@
   "projectOwner" : "Work Group Owner",
   "projectOwner_indefinite" : "a Work Group Owner",
 
+  "Project" : "$t(project)",
+  "ProjectPlural" : "$t(project_plural)",
+  "ProjectIndefinite": "$t(project_indefinite)",
+  "ProjectPluralIndefinite": "$t(project_plural_indefinite)",
+  "ProjectOwnerIndefinite" : "$t(projectOwner_indefinite)",
+  "projectPlural" : "$t(project_plural)",
+
   "task" : "Opportunity",
   "task_plural" : "Opportunities",
   "task_indefinite" : "an Opportunity",
   "task_plural_indefinite": "some Opportunities",
   "taskOwner" : "Opportunity Owner",
   "taskOwner_indefinite" : "an Opportunity Owner",
+
+  "Task" : "$t(task)",
+  "TaskPlural" : "$t(task_plural)",
+  "TaskIndefinite" : "$t(task_indefinite)",
+  "TaskPluralIndefinite": "$t(task_plural_indefinite)",
+  "TaskOwnerIndefinite" : "$t(taskOwner_indefinite)",
+  "taskPlural" : "$t(task_plural)",
+
+  "like" : "like",
+  "like_plural" : "likes",
+  "likePlural" : "$t(like_plural)",
+
+  "volunteer" : "volunteer",
+  "volunteer_plural" : "volunteers",
+  "volunteerPlural" : "$t(volunteer_plural)",
+
+  "Browse" : "Browse",
 
   "profile" : "profile",
 
