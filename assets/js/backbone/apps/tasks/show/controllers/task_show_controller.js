@@ -2,6 +2,7 @@ define([
   'bootstrap',
   'underscore',
   'backbone',
+  'i18n',
   'popovers',
   'utilities',
   'base_view',
@@ -14,8 +15,9 @@ define([
   'task_edit_form_view',
   'json!ui_config',
   'text!volunteer_supervisor_notify_template',
-  'text!volunteer_text_template'
-], function (Bootstrap, _, Backbone, Popovers, utils, BaseView, CommentListController, AttachmentView, TaskItemView, TagShowView, ModalComponent, ModalAlert, TaskEditFormView, UIConfig, VolunteerSupervisorNotifyTemplate, VolunteerTextTemplate) {
+  'text!volunteer_text_template',
+  'text!change_state_template'
+], function (Bootstrap, _, Backbone, i18n, Popovers, utils, BaseView, CommentListController, AttachmentView, TaskItemView, TagShowView, ModalComponent, ModalAlert, TaskEditFormView, UIConfig, VolunteerSupervisorNotifyTemplate, VolunteerTextTemplate, ChangeStateTemplate) {
 
   var popovers = new Popovers();
 
@@ -31,7 +33,7 @@ define([
       "click #like-button"              : 'like',
       'click #volunteer'                : 'volunteer',
       'click #volunteered'              : 'volunteered',
-      "click #task-close"               : "stateClose",
+      "click #task-close"               : "stateChange",
       "click #task-reopen"              : "stateReopen",
       "click .link-backbone"            : linkBackbone,
       "mouseenter .project-people-div"  : popovers.popoverPeopleOn,
@@ -141,8 +143,8 @@ define([
         $("#like-text").text($("#like-text").data('plural'));
       }
       if (this.model.attributes.like) {
-        $("#like-button-icon").removeClass('icon-star-empty');
-        $("#like-button-icon").addClass('icon-star');
+        $("#like-button-icon").removeClass('fa fa-star-o');
+        $("#like-button-icon").addClass('fa fa-star');
       }
     },
 
@@ -209,9 +211,9 @@ define([
       var child = $(e.currentTarget).children("#like-button-icon");
       var likenumber = $("#like-number");
       // Not yet liked, initiate like
-      if (child.hasClass('icon-star-empty')) {
-        child.removeClass('icon-star-empty');
-        child.addClass('icon-star');
+      if (child.hasClass('fa-star-o')) {
+        child.removeClass('fa-star-o');
+        child.addClass('fa-star');
         likenumber.text(parseInt(likenumber.text()) + 1);
         if (parseInt(likenumber.text()) === 1) {
           $("#like-text").text($("#like-text").data('singular'));
@@ -228,8 +230,8 @@ define([
       }
       // Liked, initiate unlike
       else {
-        child.removeClass('icon-star');
-        child.addClass('icon-star-empty');
+        child.removeClass('fa-star');
+        child.addClass('fa-star-empty');
         likenumber.text(parseInt(likenumber.text()) - 1);
         if (parseInt(likenumber.text()) === 1) {
           $("#like-text").text($("#like-text").data('singular'));
@@ -366,34 +368,36 @@ define([
       // Not able to un-volunteer, so do nothing
     },
 
-    stateClose: function (e) {
+    stateChange: function (e) {
       if (e.preventDefault) e.preventDefault();
       var self = this;
 
       if (this.modalAlert) { this.modalAlert.cleanup(); }
       if (this.modalComponent) { this.modalComponent.cleanup(); }
+      var states = UIConfig.states;
+      var modalContent = _.template(ChangeStateTemplate,{model:self.model,states: states});
       this.modalComponent = new ModalComponent({
         el: "#modal-close",
         id: "check-close",
-        modalTitle: "Close Opportunity"
+        modalTitle: "Change "+i18n.t("Task")+" State"
       }).render();
 
       this.modalAlert = new ModalAlert({
         el: "#check-close .modal-template",
         modalDiv: '#check-close',
-        content: '<p>Are you sure you want to close this opportunity?  Once the opportunity is closed, volunteers will no longer be able to contribute.</p>',
+        content: modalContent,
         cancel: 'Cancel',
-        submit: 'Close Opportunity',
+        submit: 'Change '+i18n.t("Task")+' State',
         callback: function (e) {
           // user clicked the submit button
-          self.model.trigger("task:update:state", 'closed');
+          self.model.trigger("task:update:state", $('input[name=opportunityState]:checked').val());
         }
       }).render();
     },
 
     stateReopen: function (e) {
       if (e.preventDefault) e.preventDefault();
-      this.model.trigger("task:update:state", 'public');
+      this.model.trigger("task:update:state", 'open');
     },
 
     cleanup: function () {

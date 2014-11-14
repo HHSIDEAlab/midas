@@ -2,6 +2,7 @@ define([
   'jquery',
   'underscore',
   'backbone',
+  'i18n',
   'utilities',
   'json!ui_config',
   'async',
@@ -9,7 +10,7 @@ define([
   'markdown_editor',
   'text!task_edit_form_template',
   'tag_factory'
-], function ($, _, Backbone, utilities, UIConfig, async, marked, MarkdownEditor, TaskEditFormTemplate, TagFactory) {
+], function ($, _, Backbone, i18n, utilities, UIConfig, async, marked, MarkdownEditor, TaskEditFormTemplate, TagFactory) {
 
   var TaskEditFormView = Backbone.View.extend({
 
@@ -55,7 +56,7 @@ define([
 
       compiledTemplate = _.template(TaskEditFormTemplate, this.data);
       this.$el.html(compiledTemplate);
-
+      this.$el.i18n();
       // DOM now exists, begin select2 init
       this.initializeSelect2();
       this.initializeTextArea();
@@ -96,12 +97,16 @@ define([
         this.$("#projectId").select2('data', this.data.data.project);
       }
 
-      this.tagFactory.createTagDropDown({type:"skill",selector:"#task_tag_skills",width: "100%"});
+      this.tagFactory.createTagDropDown({
+        type:"skill",selector:"#task_tag_skills",width: "100%", tokenSeparators: [","]
+      });
       if (this.data['madlibTags'].skill) {
         this.$("#task_tag_skills").select2('data', this.data['madlibTags'].skill);
       }
 
-      this.tagFactory.createTagDropDown({type:"topic",selector:"#task_tag_topics",width: "100%"});
+      this.tagFactory.createTagDropDown({
+        type:"topic", selector: "#task_tag_topics", width: "100%", tokenSeparators: [","]
+      });
       if (this.data['madlibTags'].topic) {
         this.$("#task_tag_topics").select2('data', this.data['madlibTags'].topic);
       }

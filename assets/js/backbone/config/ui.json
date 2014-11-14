@@ -7,5 +7,10 @@
   },
   "home": {
     "logged_in_path": "/tasks"
-  }
+  },
+  "browse": {
+    "pageSize" : 27,
+    "useInfiniteScroll" : false
+  },
+  "states" : [{"value": "open","label":"Open"},{"value":"assigned","label":"Assigned"},{"value": "completed","label":"Completed"},{"value":"archived","label":"Archived"}]
 }

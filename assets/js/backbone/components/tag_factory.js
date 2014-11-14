@@ -104,6 +104,7 @@ define([
           minimumInputLength: 2,
           multiple: true,
           width: options.width || "500px",
+          tokenSeparators: options.tokenSeparators || [],
           formatResult: function (obj, container, query) {
             return obj.name;
           },

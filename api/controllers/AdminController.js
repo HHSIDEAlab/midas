@@ -53,11 +53,11 @@ module.exports = {
               Project.find().where({id: projIds}).exec(function(err, projects) {
                 if (err) { done('Failed to retrieve projects ' +  err);}
                 async.each(projects, function(project, cb) {
-                  if (project.state === "public") {
+                  if (project.state === "open") {
                     user.projectsCreatedOpen++;
                     cb();
                   }
-                  else if (project.state === "closed") {
+                  else {
                     user.projectsCreatedClosed++;
                     cb();
                   }
@@ -78,10 +78,10 @@ module.exports = {
             if (err) { done('Failed to retrieve tasks' + err);}
             if (tasks.count !== 0) {
               async.each(tasks, function(task, cb) {
-                if (task.state === "public") {
+                if (task.state === "open") {
                   user.tasksCreatedOpen++;
                   cb();
-                } else if (task.state === "closed") {
+                } else {
                   user.tasksCreatedClosed++;
                   cb();
                 }
@@ -107,11 +107,11 @@ module.exports = {
               Task.find().where({id: taskIds}).exec(function(err, tasks) {
                 if (err) { done('Failed to retrieve tasks for volunteers ' +  err);}
                 async.each(tasks, function(task, cb) {
-                  if (task.state === "public") {
+                  if (task.state === "open") {
                     user.volCountOpen++;
                     cb();
                   }
-                  else if (task.state === "closed") {
+                  else {
                     user.volCountClosed++;
                     cb();
                   }
@@ -127,7 +127,7 @@ module.exports = {
           callback(null);
         });
     };
-
+    
     // find users that meet this criteria
     User.find()
     .where(where)
@@ -141,7 +141,6 @@ module.exports = {
         async.each(users, addUserMetrics, function(err) {
           if (err) { res.send(400, { message: 'Error retrieving metrics for users.', err: err}); }
           // return a paginated object
-          sails.log.debug(users);
           return res.send({
             page: page,
             limit: Math.min(users.length, limit),
@@ -198,7 +197,6 @@ module.exports = {
           Project.count().exec(function(err, projectCount) {
             if (err) { return res.send(400, { message: 'An error occurred looking up project metrics.', error: err }); }
             metrics.projects.count = projectCount;
-            sails.log.debug(metrics);
             return res.send(metrics);
           });
         });

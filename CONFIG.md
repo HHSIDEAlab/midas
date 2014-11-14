@@ -25,3 +25,39 @@ edit ```assets/js/backbone/config/ui.json``` which allows customization of UI fe
   }
 }
 ```
+
+## Bulk Import of Tag Data
+
+Bulk import of tags can be done via ```tagTool``` in the tools directory. It can be called like:
+```
+node tools\tagtool\tagtool.js <tagType> <tagFile>
+<tagType>: location, agency, topic, skill, etc
+<tagFile>: Filepath/name of file containing newline delimited tags one per line.
+```
+Database configuration for the tool is pulled from config/local.js. Duplicate tags will not be inserted.
+
+tagTool can also be run from ```grunt```. Running ```grunt initTags``` will run the tool for all files with a .txt extension in tools\tagtool, using the file's name (without extension) as the ```tagType```. 
+
+
+## Configuring Opportunity and Project States
+
+The state of a Project or Opportunity controls it's visibility in certain views and what funcitonality is available. The states currently supported are:
+
+* Open - open for volunteering and discussions, this is the default state
+* Assigned - a volunteer has been assigned, discussion is still open
+* Archived - closed in a incomplete or unstarted state, no volunteers or discussion
+* Completed - closed in a finished state, no volunteers or discussion
+
+These states are listed in ```assets/js/backbone/config/ui.json```.
+```
+"states" :
+		{
+		 "value": "open",
+		 "label": "Open"
+		},...
+```
+
+Changing the value of label is largely cosmetic as it is used to drive drop downs and other display information. If you change the value of value and do not change code to support it midas will behave in an inconsitent manner.
+
+When upgrading Midas from versions prior to .21 you need to run ```./tools/postgres/rename-public-to-open-state.sh``` to update any existing projects or opportunities.
+

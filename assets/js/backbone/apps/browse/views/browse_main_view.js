@@ -6,14 +6,13 @@ define([
   'i18n',
   'utilities',
   'json!ui_config',
-  'jquery_dotdotdot',
   'popovers',
   'tag_config',
   'browse_list_view',
   'text!browse_main_template',
   'text!browse_search_tag'
 ], function ($, select2, _, Backbone, i18n, utils, UIConfig,
-            dotdotdot, Popovers, TagConfig,
+            Popovers, TagConfig,
             BrowseListView, BrowseMainTemplate, BrowseSearchTag) {
 
   var popovers = new Popovers();
@@ -51,9 +50,9 @@ define([
       var name = object.name || object.title;
       var icon = this.tagIcon[object.type];
       if (object.target == 'project') {
-        icon = 'icon-folder-close-alt';
+        icon = 'fa fa-folder-o';
       } else if (object.target == 'task') {
-        icon = 'icon-tag';
+        icon = 'fa fa-tag';
       }
       return '<i class="' + icon + '"></i> <span class="box-icon-text">' + name + '</span>';
     },
@@ -155,7 +154,6 @@ define([
       $("#browse-search-spinner").hide();
       $("#browse-list").show();
       this.browseListView.render();
-      $(".dotdotdot").dotdotdot();
       popovers.popoverPeopleInit(".project-people-div");
     },
 

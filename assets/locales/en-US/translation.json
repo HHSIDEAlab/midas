@@ -16,6 +16,8 @@
   "task" : "opportunity",
   "taskPlural" : "opportunities",
 
+  "SaveTask"  : "Save Opportunity",
+
   "like" : "like",
   "likePlural" : "likes",
 
@@ -23,6 +25,11 @@
   "volunteerPlural" : "volunteers",
 
   "Browse" : "Browse",
+
+  "taskPage" : {
+    "volunteerButton" : "Volunteer",
+    "volunteeredButton" : "Volunteered!"
+  },
 
   "loginModal" : {
     "tosCheckbox": "Yes, I agree to the "
