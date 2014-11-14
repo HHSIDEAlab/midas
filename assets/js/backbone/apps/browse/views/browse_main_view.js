@@ -3,16 +3,16 @@ define([
   'jquery_select2',
   'underscore',
   'backbone',
+  'i18n',
   'utilities',
   'json!ui_config',
-  'jquery_dotdotdot',
   'popovers',
   'tag_config',
   'browse_list_view',
   'text!browse_main_template',
   'text!browse_search_tag'
-], function ($, select2, _, Backbone, utils, UIConfig,
-            dotdotdot, Popovers, TagConfig,
+], function ($, select2, _, Backbone, i18n, utils, UIConfig,
+            Popovers, TagConfig,
             BrowseListView, BrowseMainTemplate, BrowseSearchTag) {
 
   var popovers = new Popovers();
@@ -38,6 +38,7 @@ define([
       };
       this.compiledTemplate = _.template(BrowseMainTemplate, options)
       this.$el.html(this.compiledTemplate);
+      this.$el.i18n();
 
       this.initializeSearch();
 
@@ -49,9 +50,9 @@ define([
       var name = object.name || object.title;
       var icon = this.tagIcon[object.type];
       if (object.target == 'project') {
-        icon = 'icon-folder-close-alt';
+        icon = 'fa fa-folder-o';
       } else if (object.target == 'task') {
-        icon = 'icon-tag';
+        icon = 'fa fa-tag';
       }
       return '<i class="' + icon + '"></i> <span class="box-icon-text">' + name + '</span>';
     },
@@ -145,15 +146,17 @@ define([
     renderList: function (collection) {
       // create a new view for the returned data
       if (this.browseListView) { this.browseListView.cleanup(); }
+
+      var filteredCollection = this.applyStateFilters(collection);
+
       this.browseListView = new BrowseListView({
         el: '#browse-list',
         target: this.options.target,
-        collection: collection,
+        collection: filteredCollection,
       });
       $("#browse-search-spinner").hide();
       $("#browse-list").show();
       this.browseListView.render();
-      $(".dotdotdot").dotdotdot();
       popovers.popoverPeopleInit(".project-people-div");
     },
 
@@ -189,6 +192,23 @@ define([
         // render the search results
         self.renderList(data);
       });
+    },
+
+    applyStateFilters: function (data) {
+      if ( !_.isObject(data) ){ return data; }
+      var keepers = [];
+      //get check stateFilter inputs
+      var inputs = $(".stateFilter:checked");
+
+      _.each(data,function(item){
+        _.each(inputs,function(test){
+           if ( item.state == test.value ){
+             keepers.push(item);
+           }
+        });
+      });
+
+      return keepers;
     },
 
     searchTagRemove: function (e) {

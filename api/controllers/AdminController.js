@@ -5,6 +5,7 @@
  * @description	:: Administrative functions only available to admin users
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
+var async = require('async');
 
 module.exports = {
 
@@ -30,32 +31,176 @@ module.exports = {
       };
     }
 
+    var addUserMetrics = function(user, callback) {
+      // check for lockouts
+      user.locked = false;
+      if (user.passwordAttempts >= sails.config.auth.auth.local.passwordAttempts) {
+        user.locked = true;
+      }
+      async.parallel([
+        // add project counts
+        function(done) {
+          // add created projects
+          user.projectsCreatedOpen = 0;
+          user.projectsCreatedClosed = 0;
+          ProjectOwner.find().where({id:user.id}).exec(function(err, owners) {
+            if (err) { done('Failed to retrieve ProjectOwners ' +  err);}
+            if (owners.length !== 0) {
+              var projIds = [];
+              for (var j in owners) {
+                projIds.push(owners[j].projectId);
+              }
+              Project.find().where({id: projIds}).exec(function(err, projects) {
+                if (err) { done('Failed to retrieve projects ' +  err);}
+                async.each(projects, function(project, cb) {
+                  if (project.state === "open") {
+                    user.projectsCreatedOpen++;
+                    cb();
+                  }
+                  else {
+                    user.projectsCreatedClosed++;
+                    cb();
+                  }
+                }, function(err) {
+                  done(null);
+                });
+              });
+            } else {
+              done(null);
+            }
+          });
+        },
+        // add task counts
+        function(done) {
+          user.tasksCreatedOpen = 0;
+          user.tasksCreatedClosed = 0;
+          Task.find().where({userId:user.id}).exec(function(err, tasks) {
+            if (err) { done('Failed to retrieve tasks' + err);}
+            if (tasks.count !== 0) {
+              async.each(tasks, function(task, cb) {
+                if (task.state === "open") {
+                  user.tasksCreatedOpen++;
+                  cb();
+                } else {
+                  user.tasksCreatedClosed++;
+                  cb();
+                }
+              }, function(err) {
+                done(null);
+              });
+            } else {
+              done(null);
+            }
+          });
+        },
+        // add volunteer counts
+        function(done) {
+          user.volCountOpen = 0;
+          user.volCountClosed = 0;
+          Volunteer.find().where({userId:user.id}).exec(function(err, volunteers) {
+            if (err) { done('Failed to retrieve volunteers ' +  err);}
+            if (volunteers.length !== 0) {
+              var taskIds = [];
+              for (var i in volunteers) {
+                taskIds.push(volunteers[i].taskId);
+              }
+              Task.find().where({id: taskIds}).exec(function(err, tasks) {
+                if (err) { done('Failed to retrieve tasks for volunteers ' +  err);}
+                async.each(tasks, function(task, cb) {
+                  if (task.state === "open") {
+                    user.volCountOpen++;
+                    cb();
+                  }
+                  else {
+                    user.volCountClosed++;
+                    cb();
+                  }
+                }, function(err) {
+                  done(null);
+                });
+              });
+            } else {
+              done(null);
+            }
+          });
+        }], function(err) { 
+          callback(null);
+        });
+    };
+    
     // find users that meet this criteria
     User.find()
     .where(where)
-    .sort('id')
+    .sort({ createdAt: 'desc' })
     .paginate({ page: page, limit: limit})
     .exec(function (err, users) {
       if (err) { return res.send(400, { message: 'Error looking up users', err: err}); }
       // count the total number of users
       User.count(function (err, count) {
         if (err) { return res.send(400, { message: 'Error counting users', err: err}); }
-        // check for lockouts
-        for (var i in users) {
-          users[i].locked = false;
-          if (users[i].passwordAttempts >= sails.config.auth.auth.local.passwordAttempts) {
-            users[i].locked = true;
+        async.each(users, addUserMetrics, function(err) {
+          if (err) { res.send(400, { message: 'Error retrieving metrics for users.', err: err}); }
+          // return a paginated object
+          return res.send({
+            page: page,
+            limit: Math.min(users.length, limit),
+            count: count,
+            users: users,
+            q: query
+          });
+        });
+      });
+    });
+  },
+
+  /**
+   * Retrieve metrics not tied to a particular user 
+   * eg: /api/admin/metrics
+   */
+  metrics: function (req, res) {
+    var metrics = {
+      users: {
+        count: 0,
+        withTasks: 0
+      },
+      tasks: {
+        count: 0,
+        withVolunteers: 0
+      },
+      projects: {
+        count: 0
+      }
+    };
+
+    User.count().exec(function(err, userCount) {
+      if (err) { return res.send(400, { message: 'An error occurred looking up user metrics.', error: err }); }
+      metrics.users.count = userCount;
+      Task.find().sort('userId').exec(function(err, tasks) {
+        if (err) { return res.send(400, { message: 'An error occurred looking up task metrics.', error: err }); }
+        metrics.tasks.count = tasks.length;
+        var lastId = -1;
+        for(var i = 0; i < metrics.tasks.count; i++) {
+          if (tasks[i].userId !== lastId) {
+            metrics.users.withTasks++;
+            lastId = tasks[i].userId;
           }
         }
-        // return a paginated object
-        return res.send({
-          page: page,
-          limit: Math.min(users.length, limit),
-          count: count,
-          users: users,
-          q: query
+        Volunteer.find().sort('taskId').exec(function(err, vols) {
+          if (err) { return res.send(400, { message: 'An error occurred looking up task metrics.', error: err }); }
+          lastId = -1;
+          for (var j = 0; j < vols.length; j++) {
+            if (vols[j].taskId !== lastId) {
+              metrics.tasks.withVolunteers++;
+              lastId = vols[j].taskId;
+            }
+          }
+          Project.count().exec(function(err, projectCount) {
+            if (err) { return res.send(400, { message: 'An error occurred looking up project metrics.', error: err }); }
+            metrics.projects.count = projectCount;
+            return res.send(metrics);
+          });
         });
-      })
+      });
     });
   },
 

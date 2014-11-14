@@ -88,6 +88,13 @@ require.config({
     'login_controller'          : '../apps/login/controllers/login_controller',
 
     // ----------
+    //= Home
+    // ----------
+    'home_controller'           : '../apps/home/controllers/home_controller',
+    'home_view'                 : '../apps/home/views/home_view',
+    'home_template'             : '../apps/home/templates/home_view_template.html',
+
+    // ----------
     //= Browse
     // ----------
     'browse_app'                : '../apps/browse/browse_app',
@@ -141,6 +148,9 @@ require.config({
     'task_show_controller'      : '../apps/tasks/show/controllers/task_show_controller',
     'task_edit_form_view'       : '../apps/tasks/edit/views/task_edit_form_view',
     'task_edit_form_template'   : '../apps/tasks/edit/templates/task_edit_form_template.html',
+    'volunteer_supervisor_notify_template' : '../apps/tasks/show/templates/volunteer_supervisor_notify_template.html',
+    'volunteer_text_template'   : '../apps/tasks/show/templates/volunteer_text_template.html',
+    'change_state_template'     : '../apps/tasks/show/templates/change_state_template.html',
 
     // ----------
     //= Events
@@ -206,6 +216,9 @@ require.config({
     'admin_tag_view'            : '../apps/admin/views/admin_tag_view',
     'admin_tag_template'        : '../apps/admin/templates/admin_tag_template.html',
     'admin_paginate'            : '../apps/admin/templates/admin_paginate.html',
+    'admin_dashboard_view'      : '../apps/admin/views/admin_dashboard_view',
+    'admin_dashboard_template'  : '../apps/admin/templates/admin_dashboard_template.html',
+    'admin_dashboard_table'     : '../apps/admin/templates/admin_dashboard_table.html',
 
     // ----------
     //= Components

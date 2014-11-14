@@ -2,6 +2,7 @@ define([
   'bootstrap',
   'underscore',
   'backbone',
+  'i18n',
   'popovers',
   'utilities',
   'base_view',
@@ -11,8 +12,12 @@ define([
   'tag_show_view',
   'modal_component',
   'modal_alert',
-  'task_edit_form_view'
-], function (Bootstrap, _, Backbone, Popovers, utils, BaseView, CommentListController, AttachmentView, TaskItemView, TagShowView, ModalComponent, ModalAlert, TaskEditFormView) {
+  'task_edit_form_view',
+  'json!ui_config',
+  'text!volunteer_supervisor_notify_template',
+  'text!volunteer_text_template',
+  'text!change_state_template'
+], function (Bootstrap, _, Backbone, i18n, Popovers, utils, BaseView, CommentListController, AttachmentView, TaskItemView, TagShowView, ModalComponent, ModalAlert, TaskEditFormView, UIConfig, VolunteerSupervisorNotifyTemplate, VolunteerTextTemplate, ChangeStateTemplate) {
 
   var popovers = new Popovers();
 
@@ -21,12 +26,14 @@ define([
     el: "#container",
 
     events: {
+      'change .validate'                : 'v',
+      'keyup .validate'                 : 'v',
       'click #task-edit'                : 'edit',
       'click #task-view'                : 'view',
       "click #like-button"              : 'like',
       'click #volunteer'                : 'volunteer',
       'click #volunteered'              : 'volunteered',
-      "click #task-close"               : "stateClose",
+      "click #task-close"               : "stateChange",
       "click #task-reopen"              : "stateReopen",
       "click .link-backbone"            : linkBackbone,
       "mouseenter .project-people-div"  : popovers.popoverPeopleOn,
@@ -38,6 +45,10 @@ define([
 
       this.initializeTaskItemView();
       this.initializeChildren();
+
+      //load user settings so they are available as needed
+      this.getUserSettings(window.cache.currentUser);
+
     },
 
     initializeEdit: function () {
@@ -132,8 +143,8 @@ define([
         $("#like-text").text($("#like-text").data('plural'));
       }
       if (this.model.attributes.like) {
-        $("#like-button-icon").removeClass('icon-star-empty');
-        $("#like-button-icon").addClass('icon-star');
+        $("#like-button-icon").removeClass('fa fa-star-o');
+        $("#like-button-icon").addClass('fa fa-star');
       }
     },
 
@@ -179,6 +190,10 @@ define([
       });
     },
 
+    v: function (e) {
+      return validate(e);
+    },
+
     edit: function (e) {
       if (e.preventDefault) e.preventDefault();
       this.initializeEdit();
@@ -196,9 +211,9 @@ define([
       var child = $(e.currentTarget).children("#like-button-icon");
       var likenumber = $("#like-number");
       // Not yet liked, initiate like
-      if (child.hasClass('icon-star-empty')) {
-        child.removeClass('icon-star-empty');
-        child.addClass('icon-star');
+      if (child.hasClass('fa-star-o')) {
+        child.removeClass('fa-star-o');
+        child.addClass('fa-star');
         likenumber.text(parseInt(likenumber.text()) + 1);
         if (parseInt(likenumber.text()) === 1) {
           $("#like-text").text($("#like-text").data('singular'));
@@ -215,8 +230,8 @@ define([
       }
       // Liked, initiate unlike
       else {
-        child.removeClass('icon-star');
-        child.addClass('icon-star-empty');
+        child.removeClass('fa-star');
+        child.addClass('fa-star-empty');
         likenumber.text(parseInt(likenumber.text()) - 1);
         if (parseInt(likenumber.text()) === 1) {
           $("#like-text").text($("#like-text").data('singular'));
@@ -230,6 +245,67 @@ define([
           // response should be null (empty)
         });
       }
+    },
+    getUserSettings: function (userId) {
+      //does this belong somewhere else?
+
+      $.ajax({
+        url: '/api/usersetting/'+userId,
+        type: 'GET',
+        dataType: 'json'
+      })
+      .success(function(data){
+        _.each(data,function(setting){
+          //save active settings to the current user object
+          if ( setting.isActive ){
+            window.cache.currentUser[setting.key]=setting;
+          }
+        });
+      });
+    },
+
+    deleteUserSettingByKey: function(settingKey) {
+      //this function expects the entire row from usersetting in the form
+      //     window.cache.currentUser[settingKey] = {}
+      var self = this;
+
+      //if not set skip
+      var targetId =  ( window.cache.currentUser[settingKey] ) ? window.cache.currentUser[settingKey].id : null ;
+
+      if ( targetId ){
+        $.ajax({
+          url: '/api/usersetting/'+targetId,
+          type: 'DELETE',
+          dataType: 'json'
+        })
+      }
+
+    },
+
+    saveUserSettingByKey: function(userId, options) {
+      //this function expects the entire row from usersetting in the form
+      //     window.cache.currentUser[settingKey] = {}
+      var self = this;
+
+      //are values the same, stop
+      if ( options.newValue == options.oldValue ) { return true; }
+
+      //if delete old is set, delete exisitng value
+      //   default is delete
+      if ( !options.deleteOld ){
+        self.deleteUserSettingByKey(options.settingKey);
+      }
+
+      $.ajax({
+          url: '/api/usersetting/',
+          type: 'POST',
+          dataType: 'json',
+          data: {
+            userId: userId,
+            key: options.settingKey,
+            value: options.newValue
+          }
+        });
     },
 
     volunteer: function (e) {
@@ -245,13 +321,30 @@ define([
         modalTitle: "Do you want to volunteer?"
       }).render();
 
+      if ( UIConfig.supervisorEmail.useSupervisorEmail ) {
+        //not assigning as null because null injected into the modalContent var shows as a literal value
+        //    when what we want is nothing if value is null
+        var supervisorEmail = ( window.cache.currentUser.supervisorEmail ) ? window.cache.currentUser.supervisorEmail.value  : "";
+        var supervisorName = ( window.cache.currentUser.supervisorName ) ? window.cache.currentUser.supervisorName.value : "";
+        var validateBeforeSubmit = true;
+        var modalContent = _.template(VolunteerSupervisorNotifyTemplate,{supervisorEmail: supervisorEmail,supervisorName: supervisorName});
+      } else {
+        validateBeforeSubmit = false;
+        var modalContent = _.template(VolunteerTextTemplate,{});
+      }
+
       this.modalAlert = new ModalAlert({
         el: "#check-volunteer .modal-template",
         modalDiv: '#check-volunteer',
-        content: '<p>I understand it is my responsibility to confirm supervisor approval prior to committing to an opportunity.</p><p>Once you volunteer for an opportunity, you will not be able to cancel your commitment to volunteer.</p>',
+        content: modalContent,
         cancel: 'Cancel',
         submit: 'I Agree',
+        validateBeforeSubmit: validateBeforeSubmit,
         callback: function (e) {
+          if ( UIConfig.supervisorEmail.useSupervisorEmail ) {
+            self.saveUserSettingByKey(window.cache.currentUser.id,{settingKey:"supervisorEmail",newValue: $('#userSuperVisorEmail').val(),oldValue: supervisorEmail});
+            self.saveUserSettingByKey(window.cache.currentUser.id,{settingKey:"supervisorName",newValue: $('#userSuperVisorName').val(),oldValue: supervisorName});
+          }
           // user clicked the submit button
           $.ajax({
             url: '/api/volunteer/',
@@ -275,34 +368,36 @@ define([
       // Not able to un-volunteer, so do nothing
     },
 
-    stateClose: function (e) {
+    stateChange: function (e) {
       if (e.preventDefault) e.preventDefault();
       var self = this;
 
       if (this.modalAlert) { this.modalAlert.cleanup(); }
       if (this.modalComponent) { this.modalComponent.cleanup(); }
+      var states = UIConfig.states;
+      var modalContent = _.template(ChangeStateTemplate,{model:self.model,states: states});
       this.modalComponent = new ModalComponent({
         el: "#modal-close",
         id: "check-close",
-        modalTitle: "Close Opportunity"
+        modalTitle: "Change "+i18n.t("Task")+" State"
       }).render();
 
       this.modalAlert = new ModalAlert({
         el: "#check-close .modal-template",
         modalDiv: '#check-close',
-        content: '<p>Are you sure you want to close this opportunity?  Once the opportunity is closed, volunteers will no longer be able to contribute.</p>',
+        content: modalContent,
         cancel: 'Cancel',
-        submit: 'Close Opportunity',
+        submit: 'Change '+i18n.t("Task")+' State',
         callback: function (e) {
           // user clicked the submit button
-          self.model.trigger("task:update:state", 'closed');
+          self.model.trigger("task:update:state", $('input[name=opportunityState]:checked').val());
         }
       }).render();
     },
 
     stateReopen: function (e) {
       if (e.preventDefault) e.preventDefault();
-      this.model.trigger("task:update:state", 'public');
+      this.model.trigger("task:update:state", 'open');
     },
 
     cleanup: function () {

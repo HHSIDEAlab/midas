@@ -4,19 +4,20 @@ define([
     'underscore',
     'backbone',
     'async',
+    'i18n',
     'utilities',
     'markdown_editor',
     'tasks_collection',
     'text!task_form_template',
     'tag_factory'
-], function ($, Bootstrap, _, Backbone, async, utilities, MarkdownEditor, TasksCollection, TaskFormTemplate, TagFactory) {
+], function ($, Bootstrap, _, Backbone, async, i18n, utilities, MarkdownEditor, TasksCollection, TaskFormTemplate, TagFactory) {
 
   var TaskFormView = Backbone.View.extend({
 
     el: "#task-list-wrapper",
 
     events: {
-      "blur .validate"        : "v",
+      "change .validate"        : "v",
       "change #task-location" : "locationChange"
     },
 
@@ -27,6 +28,7 @@ define([
       this.data = {};
       this.data.newTag = {};
       this.data.newItemTags = [];
+      this.data.existingTags = [];
       this.initializeSelect2Data();
       this.initializeListeners();
     },
@@ -68,10 +70,10 @@ define([
           tags.push(newItemTag);
         });
 
-        tempTags.push.apply(tempTags,self.$("#topics").select2('data'));
-        tempTags.push.apply(tempTags,self.$("#skills").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#task_tag_topics").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#task_tag_skills").select2('data'));
         if (self.$("#task-location").select2('data').id == 'true') {
-          tempTags.push.apply(tempTags,self.$("#location").select2('data'));
+          tempTags.push.apply(tempTags,self.$("#task_tag_location").select2('data'));
         }
         
         //see if there are any previously created big three tags and add them to the tag array
@@ -81,13 +83,10 @@ define([
           }
         });
 
-        //existing tags not part of big three
-        tags.push(self.$("#skills-required").select2('data'));
-        tags.push(self.$("#people").select2('data'));
-        tags.push(self.$("#time-required").select2('data'));
-        tags.push(self.$("#time-estimate").select2('data'));
-        tags.push(self.$("#length").select2('data'));
-        
+        _.each(this.data.existingTags, function(tempTag) {
+            tags.push(tempTag);
+        });
+
         async.forEach(
           tags,
           function(tag, callback){
@@ -101,16 +100,22 @@ define([
         );
       });
 
-
       this.listenTo(this.tasks,"task:save:success", function (taskId){
         //the only concern here is to add newly created tags which is only available in the three items below
         //
 
         self.tempTaskId = taskId;
 
+        // save the tags from the drop downs
+        this.data.existingTags.push(self.$("#skills-required").select2('data'));
+        this.data.existingTags.push(self.$("#people").select2('data'));
+        this.data.existingTags.push(self.$("#time-required").select2('data'));
+        this.data.existingTags.push(self.$("#time-estimate").select2('data'));
+        this.data.existingTags.push(self.$("#length").select2('data'));
+
         var newTags = [];
 
-        newTags = newTags.concat(self.$("#topics").select2('data'),self.$("#skills").select2('data'),self.$("#location").select2('data'));
+        newTags = newTags.concat(self.$("#task_tag_topics").select2('data'),self.$("#task_tag_skills").select2('data'),self.$("#task_tag_location").select2('data'));
         
         async.forEach(
           newTags, 
@@ -130,9 +135,9 @@ define([
 
       // Gather tags for submission after the task is created
       tags = {
-        topic: this.$("#topics").select2('data'),
-        skill: this.$("#skills").select2('data'),
-        location: this.$("#location").select2('data'),
+        topic: this.$("#task_tag_topics").select2('data'),
+        skill: this.$("#task_tagskills").select2('data'),
+        location: this.$("#task_tag_location").select2('data'),
         'task-skills-required': [ this.$("#skills-required").select2('data') ],
         'task-people': [ this.$("#people").select2('data') ],
         'task-time-required': [ this.$("#time-required").select2('data') ],
@@ -151,6 +156,7 @@ define([
 
       // Important: Hide all non-currently opened sections of wizard.
       this.$("section:not(.current)").hide();
+      this.$el.i18n();
 
       // Return this for chaining.
       return this;
@@ -174,9 +180,9 @@ define([
     initializeSelect2: function () {
       var self = this;
 
-      self.tagFactory.createTagDropDown({type:"skill",selector:"#skills"});
-      self.tagFactory.createTagDropDown({type:"topic",selector:"#topics"});
-      self.tagFactory.createTagDropDown({type:"location",selector:"#location"});
+      self.tagFactory.createTagDropDown({type:"skill",selector:"#task_tag_skills",width: "100%",tokenSeparators: [","]});
+      self.tagFactory.createTagDropDown({type:"topic",selector:"#task_tag_topics",width: "100%",tokenSeparators: [","]});
+      self.tagFactory.createTagDropDown({type:"location",selector:"#task_tag_location",width: "100%",tokenSeparators: [","]});
       
       self.$(".el-specific-location").hide();
 
@@ -221,11 +227,10 @@ define([
         data: '',
         el: ".markdown-edit",
         id: 'task-description',
-        placeholder: 'Description of opportunity including goals, expected outcomes and deliverables.',
-        title: 'Opportunity Description',
+        placeholder: 'Description of ' + i18n.t('task') + ' including goals, expected outcomes and deliverables.',
+        title: i18n.t('Task') + ' Description',
         rows: 6,
-        maxlength: 1000,
-        validate: ['empty', 'count1000']
+        validate: ['empty']
       }).render();
     },
 

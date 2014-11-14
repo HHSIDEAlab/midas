@@ -2,11 +2,12 @@ define([
   'jquery',
   'underscore',
   'backbone',
+  'i18n',
   'utilities',
   'login_password_view',
   'text!login_template',
   'modal_component'
-], function ($, _, Backbone, utils, LoginPasswordView, LoginTemplate, ModalComponent) {
+], function ($, _, Backbone, i18n, utils, LoginPasswordView, LoginTemplate, ModalComponent) {
 
   var LoginView = Backbone.View.extend({
 
@@ -34,6 +35,7 @@ define([
       };
       var template = _.template(LoginTemplate, data);
       this.$el.html(template);
+      this.$el.i18n();
       this.loginPasswordView = new LoginPasswordView({
         el: this.$(".password-view")
       }).render();
@@ -160,16 +162,16 @@ define([
       }).done(function (data) {
         $("#rusername-button").removeClass('btn-success');
         $("#rusername-button").removeClass('btn-danger');
-        $("#rusername-check").removeClass('icon-ok');
-        $("#rusername-check").removeClass('icon-remove');
+        $("#rusername-check").removeClass('fa fa-check');
+        $("#rusername-check").removeClass('fa fa-times');
         if (data) {
           // username is taken
           $("#rusername-button").addClass('btn-danger');
-          $("#rusername-check").addClass('icon-remove');
+          $("#rusername-check").addClass('fa fa-times');
         } else {
           // username is available
           $("#rusername-button").addClass('btn-success');
-          $("#rusername-check").addClass('icon-ok');
+          $("#rusername-check").addClass('fa fa-check');
         }
       });
     },

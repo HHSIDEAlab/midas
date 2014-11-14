@@ -5,10 +5,13 @@ define([
   'jquery_select2',
   'underscore',
   'backbone',
+  'i18n',
   'utilities',
+  'async',
   'text!project_show_template',
-  'tag_show_view'
-], function ($, jqIframe, jqFU, select2, _, Backbone, utils, ProjectShowTemplate, TagShowView) {
+  'tag_show_view',
+  'tag_factory',
+], function ($, jqIframe, jqFU, select2, _, Backbone, i18n, utils, async, ProjectShowTemplate, TagShowView, TagFactory) {
 
   var ProjectShowView = Backbone.View.extend({
 
@@ -27,6 +30,8 @@ define([
           this.edit = true;
         }
       }
+      this.tagFactory = new TagFactory();
+      this.data.newItemTags = [];
     },
 
     render: function () {
@@ -40,8 +45,10 @@ define([
 
       compiledTemplate = _.template(ProjectShowTemplate, data);
       this.$el.html(compiledTemplate);
+      this.$el.i18n();
 
       this.initializeToggle();
+      this.initializeTagFactory();
       this.initializeFileUpload();
       this.initializeTags();
       this.updatePhoto();
@@ -65,10 +72,10 @@ define([
     updateProjectEmail: function() {
       var self = this;
       $.ajax({
-        url: '/api/email/makeURL?email=contactUserAboutProject&subject=Check Out "'+ self.model.attributes.title + '"' +
+        url: encodeURI('/api/email/makeURL?email=contactUserAboutProject&subject=Check Out "'+ self.model.attributes.title + '"' +
         '&projectTitle=' + self.model.attributes.title +
         '&projectLink=' + window.location.protocol + "//" + window.location.host + "" + window.location.pathname +
-        '&projectDescription=' + (self.model.attributes.description || ''),
+        '&projectDescription=' + (self.model.attributes.description || '')),
         type: 'GET'
       }).done( function (data) {
         self.$('#email').attr('href', data);
@@ -76,12 +83,69 @@ define([
 
     },
 
+    initializeTagFactory: function() {
+      var self = this;
+
+      this.listenTo(self.model, "project:tag:update:start", function (tags) {
+
+        var newTags = [];
+        newTags = newTags.concat(self.$("#tag_topic").select2('data'),self.$("#tag_skill").select2('data'),self.$("#tag_location").select2('data'),self.$("#tag_agency").select2('data'));
+
+        async.forEach(
+          newTags,
+          function(newTag, callback) {
+            return self.tagFactory.addTagEntities(newTag,self,callback);
+          },
+          function(err) {
+            if (err) return next(err);
+            self.trigger("newTagSaveDone");
+          }
+        );
+      });
+
+      self.on('newTagSaveDone',function (){
+
+        tags         = [];
+        var tempTags = [];
+
+        //get newly created tags from big three types
+        _.each(self.data.newItemTags, function(newItemTag){
+          tags.push(newItemTag);
+        });
+
+        tempTags.push.apply(tempTags,self.$("#tag_topic").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#tag_skill").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#tag_location").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#tag_agency").select2('data'));
+
+        //see if there are any previously created big three tags and add them to the tag array
+        _.each(tempTags,function(tempTag){
+            if ( tempTag.id !== tempTag.name ){
+            tags.push(tempTag);
+          }
+        });
+
+        var tagMap = {};
+        var projectId = self.model.attributes.id;
+
+        async.forEach(
+          tags,
+          function(tag, callback){
+            return self.tagFactory.addTag(tag,projectId,"projectId",callback);
+          },
+          function(err){
+            self.model.trigger("project:tags:save:success", err);
+          }
+        );
+      });
+    },
+
     initializeToggle: function () {
       if(this.edit){
-        this.$('#editProject').find('.box-icon-text').html('View Project');
+        this.$('#editProject').find('.box-icon-text').html('View ' + i18n.t('Project'));
       }
       else{
-        this.$('#editProject').find('.box-icon-text').html('Edit Project');
+        this.$('#editProject').find('.box-icon-text').html('Edit ' + i18n.t('Project'));
       }
     },
 

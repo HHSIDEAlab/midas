@@ -2,6 +2,7 @@ define([
   'jquery',
   'underscore',
   'backbone',
+  'i18n',
   'utilities',
   'json!ui_config',
   'async',
@@ -15,9 +16,10 @@ define([
   'json!login_config',
   'modal_component',
   'profile_activity_view',
-  'profile_email_view'
-], function ($,  _, Backbone, utils, UIConfig, async, jqIframe, jqFU, MarkdownEditor, marked,
-  TagShowView, ProfileTemplate, EmailTemplate, Login, ModalComponent, PAView, EmailFormView) {
+  'profile_email_view',
+  'tag_factory'
+], function ($,  _, Backbone, i18n, utils, UIConfig, async, jqIframe, jqFU, MarkdownEditor, marked,
+  TagShowView, ProfileTemplate, EmailTemplate, Login, ModalComponent, PAView, EmailFormView, TagFactory) {
 
   var ProfileShowView = Backbone.View.extend({
 
@@ -36,6 +38,8 @@ define([
     initialize: function (options) {
       this.options = options;
       this.data = options.data;
+      this.tagFactory = new TagFactory();
+      this.data.newItemTags = [];
       this.edit = false;
       if (this.options.action == 'edit') {
         this.edit = true;
@@ -61,6 +65,7 @@ define([
       }
       var template = _.template(ProfileTemplate, data);
       this.$el.html(template);
+      this.$el.i18n();
 
       // initialize sub components
       this.initializeFileUpload();
@@ -75,8 +80,7 @@ define([
       this.updateProfileEmail();
       return this;
     },
-
-    initializeFileUpload: function () {
+ initializeFileUpload: function () {
       var self = this;
 
       $('#fileupload').fileupload({
@@ -123,12 +127,12 @@ define([
     updateProfileEmail: function(){
       var self = this;
       $.ajax({
-        url: '/api/email/makeURL?email=contactUserAboutProfile&subject=Check Out "'+ self.model.attributes.name + '"' +
+        url: encodeURI('/api/email/makeURL?email=contactUserAboutProfile&subject=Check Out "'+ self.model.attributes.name + '"' +
         '&profileTitle=' + (self.model.attributes.title || '') +
         '&profileLink=' + window.location.protocol + "//" + window.location.host + "" + window.location.pathname +
         '&profileName=' + (self.model.attributes.name || '') +
         '&profileLocation=' + (self.model.attributes.location ? self.model.attributes.location.tag.name : '') +
-        '&profileAgency=' + (self.model.agency ? self.model.agency.name : ''),
+        '&profileAgency=' + (self.model.agency ? self.model.agency.name : '')),
         type: 'GET'
       }).done( function (data) {
         self.$('#email').attr('href', data);
@@ -197,6 +201,14 @@ define([
     initializeForm: function() {
       var self = this;
 
+      $("#topics").on('change', function (e) {
+        self.model.trigger("profile:input:changed", e);
+      });
+
+      $("#skills").on('change', function (e) {
+        self.model.trigger("profile:input:changed", e);
+      });
+
       this.listenTo(self.model, "profile:save:success", function (data) {
         // Bootstrap .button() has execution order issue since it
         // uses setTimeout to change the text of buttons.
@@ -213,7 +225,66 @@ define([
         ];
         self.model.trigger("profile:tags:save", tags);
       });
-      this.listenTo(self.model, "profile:tags:save", function (tags) {
+
+      self.on('newTagSaveDone',function (){
+
+        tags         = [];
+        var tempTags = [];
+
+        //get newly created tags from big three types
+        _.each(self.data.newItemTags, function(newItemTag){
+          tags.push(newItemTag);
+        });
+
+        tempTags.push.apply(tempTags,self.$("#tag_topic").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#tag_skill").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#tag_location").select2('data'));
+        tempTags.push.apply(tempTags,self.$("#tag_agency").select2('data'));
+
+        //see if there are any previously created big three tags and add them to the tag array
+        _.each(tempTags,function(tempTag){
+            if ( tempTag.id !== tempTag.name ){
+            tags.push(tempTag);
+          }
+        });
+
+        var tagMap = {};
+
+          // if a different profile is being edited, add its userId
+          if (self.model.toJSON().id !== window.cache.currentUser.id) {
+            tagMap.userId = self.model.toJSON().id;
+          }
+
+        async.forEach(
+          tags,
+          function(tag, callback){
+            //diffAdd,self.model.attributes.id,"taskId",callback
+            return self.tagFactory.addTag(tag,tagMap.userId,"userId",callback);
+          },
+          function(err){
+            self.model.trigger("profile:tags:save:success", err);
+          }
+        );
+      });
+
+        this.listenTo(self.model, "profile:tags:save", function (tags) {
+
+        var newTags = [];
+
+        newTags = newTags.concat(self.$("#tag_topic").select2('data'),self.$("#tag_skill").select2('data'),self.$("#tag_location").select2('data'),self.$("#tag_agency").select2('data'));
+
+        async.forEach(
+          newTags,
+          function(newTag, callback) {
+            return self.tagFactory.addTagEntities(newTag,self,callback);
+          },
+          function(err) {
+            if (err) return next(err);
+            self.trigger("newTagSaveDone");
+          }
+        );
+
+
         var removeTag = function(type, done) {
           if (self.model[type]) {
             // delete the existing tag
@@ -254,18 +325,24 @@ define([
         }
 
         async.each(['agency','location'], removeTag, function (err) {
-          async.each(tags, addTag, function (err) {
+          async.forEach(tags, addTag, function (err) {
             return self.model.trigger("profile:tags:save:success", err);
           });
         });
       });
+
       this.listenTo(self.model, "profile:tags:save:success", function (err) {
-        setTimeout(function() { $("#profile-save, #submit").attr("disabled", "disabled") }, 0);
+        setTimeout(function() { $("#profile-save, #submit").attr("disabled", "disabled") },0);
         $("#profile-save, #submit").removeClass("btn-primary");
         $("#profile-save, #submit").addClass("btn-success");
         self.data.saved = true;
-        Backbone.history.navigate('profile/' + self.model.toJSON().id, { trigger: true });
+
+        //despite being wrapped in a event listener, this only "refresh" only seems to reflect the update data with the delay
+        setTimeout(function(){
+          Backbone.history.navigate('profile/' + self.model.toJSON().id, { trigger: true });
+        },50);
       });
+
       this.listenTo(self.model, "profile:save:fail", function (data) {
         $("#submit").button('fail');
       });
@@ -288,13 +365,14 @@ define([
         $("#like-text").text($("#like-text").data('plural'));
       }
       if (this.model.attributes.like) {
-        $("#like-button-icon").removeClass('icon-star-empty');
-        $("#like-button-icon").addClass('icon-star');
+        $("#like-button-icon").removeClass('fa fa-star-o');
+        $("#like-button-icon").addClass('fa fa-star');
       }
     },
 
     initializeSelect2: function () {
       var self = this;
+
       var formatResult = function (object, container, query) {
         return object.name;
       };
@@ -322,6 +400,15 @@ define([
       if (modelJson.agency) {
         $("#company").select2('data', modelJson.agency.tag);
       }
+
+      $("#topics").on('change', function (e) {
+        self.model.trigger("profile:input:changed", e);
+      });
+
+      $("#skills").on('change', function (e) {
+        self.model.trigger("profile:input:changed", e);
+      });
+
       $("#company").on('change', function (e) {
         self.model.trigger("profile:input:changed", e);
       });
@@ -415,6 +502,7 @@ define([
         bio: $("#bio").val()
       };
       this.model.trigger("profile:save", data);
+      //this.render();
     },
 
     removeAuth: function (e) {
@@ -468,9 +556,9 @@ define([
       var child = $(e.currentTarget).children("#like-button-icon");
       var likenumber = $("#like-number");
       // Not yet liked, initiate like
-      if (child.hasClass('icon-star-empty')) {
-        child.removeClass('icon-star-empty');
-        child.addClass('icon-star');
+      if (child.hasClass('fa-star-o')) {
+        child.removeClass('fa-star-o');
+        child.addClass('fa fa-star');
         likenumber.text(parseInt(likenumber.text()) + 1);
         if (parseInt(likenumber.text()) === 1) {
           $("#like-text").text($("#like-text").data('singular'));
@@ -487,8 +575,8 @@ define([
       }
       // Liked, initiate unlike
       else {
-        child.removeClass('icon-star');
-        child.addClass('icon-star-empty');
+        child.removeClass('fa-star');
+        child.addClass('fa-star-o');
         likenumber.text(parseInt(likenumber.text()) - 1);
         if (parseInt(likenumber.text()) === 1) {
           $("#like-text").text($("#like-text").data('singular'));

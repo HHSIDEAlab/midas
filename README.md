@@ -14,7 +14,7 @@ Midas is a platform that facilitates collaborative work worldwide.  Individuals 
 
 The Midas platform provides collaboration and crowdsourcing tools, developed in Node.js.
 
-Read more about Midas in our [introductory blog post](http://18fblog.tumblr.com/post/91952641466/midas-a-marketplace-for-innovation-in-government).
+Read more about Midas in our [introductory blog post](https://18f.gsa.gov/2014/07/16/midas-a-marketplace-for-innovation-in-government/).
 
 ## Installation
 
@@ -37,3 +37,11 @@ copyright and related rights in the work worldwide are waived through
 the [CC0 1.0 Universal public domain dedication](https://creativecommons.org/publicdomain/zero/1.0/).
 
 For more information, see [license](LICENSE.md).
+
+## Screenshots
+  
+![screen shot 2014-10-06 at 3 43 43 pm](https://cloud.githubusercontent.com/assets/633088/4532245/294ef4d8-4d91-11e4-8fb9-f2b43bbedcca.png)
+  
+  
+![screen shot 2014-10-06 at 3 17 53 pm](https://cloud.githubusercontent.com/assets/633088/4531895/555718c4-4d8e-11e4-8960-9585b2adb640.png)
+
